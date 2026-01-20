@@ -1,26 +1,44 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Inject, Injectable } from '@nestjs/common';
+import { MongoClient, ObjectId } from 'mongodb';
+import { Role, UserDto } from './dto/user.dto';
+import { promises } from 'dns';
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  constructor(@Inject('MONGO_CLIENT') private readonly client: MongoClient) {}
+
+  async getAllUsers(): Promise<UserDto[]> {
+    const db = this.client.db('tiles');
+    const users = await db.collection<UserDto>('users').find().toArray();
+    return users;
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async getUserById(id: string): Promise<UserDto | null> {
+    const db = this.client.db('tiles');
+    const _id = new ObjectId(id);
+    const user = await db.collection<UserDto>('users').findOne({ _id });
+    return user;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+  async getUserByRole(role: Role): Promise<UserDto[]> {
+  const db = this.client.db('tiles');
+  const users = await db.collection<UserDto>('users').find({ role }).toArray();
+  return users;
+}
+async updateUserRole(id: string, data: { role: Role }) {
+  const db = this.client.db('tiles');
+  const _id = new ObjectId(id);
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
+  const result = await db
+    .collection<UserDto>('users')
+    .findOneAndUpdate(
+      { _id },          
+      { $set: data },   
+      { returnDocument: 'after' }  
+    );
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
+  return result;  
+}
+
+
 }
