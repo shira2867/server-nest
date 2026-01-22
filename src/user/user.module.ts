@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { DatabaseModule } from 'src/database/database.module';
-import { AuthorizeRoleGuard, JwtAuthGuard } from 'src/guard/auth.guard';
+import { RolesGuard, JwtAuthGuard } from 'src/guard/auth.guard';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
@@ -13,6 +13,7 @@ import { JwtModule } from '@nestjs/jwt';
     }),
   ],
   controllers: [UserController],
-  providers: [UserService, JwtAuthGuard],
+  providers: [UserService, JwtAuthGuard, RolesGuard],
+  exports: [UserService, JwtAuthGuard, RolesGuard],
 })
 export class UserModule {}

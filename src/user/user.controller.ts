@@ -21,8 +21,9 @@ import { LoginDto } from './dto/login.dto';
 import type { Response } from 'express';
 import { get } from 'http';
 import { myUserPayloadDto } from './dto/myUserPayload.dto';
-import { JwtAuthGuard ,AuthorizeRoleGuard} from '../guard/auth.guard';
+import { JwtAuthGuard, RolesGuard } from '../guard/auth.guard';
 import { error } from 'console';
+import { Roles } from 'src/decorators/roles.decorator';
 
 interface AuthRequest extends Request {
   user?: myUserPayloadDto;
@@ -31,34 +32,36 @@ interface AuthRequest extends Request {
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   @Get('getAllUser')
   findAll() {
     return this.userService.getAllUsers();
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   @Get('getUserById/:id')
   findById(@Param('id') id: string): Promise<UserDto | null> {
     return this.userService.getUserById(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   @Get('getUserByRole/:role')
   findByRole(@Param('role') role: Role): Promise<UserDto[]> {
     return this.userService.getUserByRole(role);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   @Put('updateRole/:id')
   updateUserRole(@Param('id') id: string, @Body('role') role: Role) {
-    const roleValidate=RoleSchema.safeParse({role})
-    if(!roleValidate.success)
-    {
-          return { success: false,error:roleValidate.error};
-
+    const roleValidate = RoleSchema.safeParse({ role });
+    if (!roleValidate.success) {
+      return { success: false, error: roleValidate.error };
     }
-  return this.userService.updateUserRole(id,  roleValidate.data  );
+    return this.userService.updateUserRole(id, roleValidate.data);
   }
 
   @Post('signUp')
