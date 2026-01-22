@@ -7,6 +7,9 @@ import { DatabaseModule } from './database/database.module';
 import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
 import { JwtModule } from '@nestjs/jwt';
+import { TileModule } from './tile/tile.module';
+import { TileController } from './tile/tile.controller';
+import { TileService } from './tile/tile.service';
 
 @Module({
   imports: [UserModule, ConfigModule.forRoot({
@@ -16,8 +19,9 @@ import { JwtModule } from '@nestjs/jwt';
   JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '12h' },
-    }),],
-  controllers: [UserController],
-  providers: [UserService],
+    }),
+  TileModule,],
+  controllers: [UserController,TileController],
+  providers: [UserService,TileService],
 })
 export class AppModule {}

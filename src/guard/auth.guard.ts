@@ -5,16 +5,15 @@ import {
   UnauthorizedException,
   ForbiddenException,
   Inject,
+  mixin,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { myUserPayloadDto } from 'src/user/dto/myUserPayload.dto';
 import { UserService } from 'src/user/user.service';
-import {allowedrole} from '../user/schemas/user.schema'
+import { allowedrole } from '../user/schemas/user.schema';
 import { Role } from 'src/user/dto/user.dto';
-
-
-export const ALLOWED_ROLES = 'ALLOWED_ROLES';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -56,19 +55,18 @@ export class JwtAuthGuard implements CanActivate {
 }
 
 @Injectable()
-export class AuthorizeRoleGuard implements CanActivate {
-  constructor(  @Inject(ALLOWED_ROLES) private  allowedRoles: Role[]) {}
-  async canActivate(context: ExecutionContext):Promise<boolean> {
+export class RolesGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const roles = this.reflector.get<Role[]>('roles', context.getHandler());
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    if (!user) {
-      throw new UnauthorizedException('Unauthorized');
-    }
 
-    if (!this.allowedRoles.includes(user.role)) {
-      throw new ForbiddenException('Access denied');
-    }
+    if (!user) return false;
 
-    return true;
+    const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+
+    return userRoles.some((role) => roles.includes(role));
   }
 }
