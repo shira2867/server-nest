@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MongoClient, ObjectId } from 'mongodb';
 import { Color, TileDto } from './dto/tile.dto';
 import { CreateTileDto } from './dto/create-tile.dto';
@@ -22,7 +22,9 @@ export class TileService {
     const result = await db
       .collection<TileDto>('tiles')
       .findOneAndUpdate({ _id }, { $set: data }, { returnDocument: 'after' });
-
+ if (!result) {
+    throw new NotFoundException('Tile not found');
+  }
     return result;
   }
 
@@ -38,15 +40,19 @@ export class TileService {
   }
 
 
-  async deleteTile(id: string): Promise<TileDto|null>
-  {
-      const db = this.client.db('tiles');
-      const _id = new ObjectId(id);
-       const result = await db
-      .collection<TileDto>('tiles')
-      .findOneAndDelete({ _id });
+ async deleteTile(id: string): Promise<TileDto> {
+  const db = this.client.db('tiles');
+  const _id = new ObjectId(id);
 
-    return result;
+  const result = await db
+    .collection<TileDto>('tiles')
+    .findOneAndDelete({ _id });
 
+  if (!result) {
+    throw new NotFoundException('Tile not found');
   }
+
+  return result;
+}
+
 }
