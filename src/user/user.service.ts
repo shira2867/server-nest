@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MongoClient, ObjectId } from 'mongodb';
 import { Role, UserDto } from './dto/user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -38,7 +38,9 @@ export class UserService {
     const result = await db
       .collection<UserDto>('users')
       .findOneAndUpdate({ _id }, { $set: data }, { returnDocument: 'after' });
-
+    if (!result) {
+      throw new NotFoundException('user not found');
+    }
     return result;
   }
 
@@ -58,26 +60,30 @@ export class UserService {
     return { ...user, _id: result.insertedId };
   }
 
-  async login(loginData:LoginDto) {
-    const {email,password}=loginData
+  async login(loginData: LoginDto) {
+    const { email, password } = loginData;
     const db = this.client.db('tiles');
     const user = await db.collection<UserDto>('users').findOne({ email });
-    if(!user)
-    {
-         throw new Error('User not found');
+    if (!user) {
+      throw new Error('User not found');
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-        throw new Error('Invalid password');
+      throw new Error('Invalid password');
     }
-     const token = jwt.sign(
-        { _id: user._id,name:user.name, role: user.role, email:user.email }, 
-        process.env.JWT_SECRET as string, 
-        { expiresIn: '1d' } 
+    const token = jwt.sign(
+      { _id: user._id, name: user.name, role: user.role, email: user.email },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '1d' },
     );
-    return { 
-        token, 
-        user: { id: user._id, name: user.name, role: user.role,email: user.email } 
+    return {
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        role: user.role,
+        email: user.email,
+      },
     };
   }
 }
