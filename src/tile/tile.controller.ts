@@ -12,12 +12,10 @@ import { TileService } from './tile.service';
 import { CreateTileDto } from './dto/create-tile.dto';
 import { JwtAuthGuard, RolesGuard } from 'src/guard/auth.guard';
 import { Roles } from 'src/decorators/roles.decorator';
-import { Role } from 'src/user/dto/user.dto';
+import { Role } from '../types/enum.type';
 import { Color } from './dto/tile.dto';
-import {
-  colorSchema,
-  tileSchema,
-} from './schemas/tile.schema';
+import { colorSchema, objectIdSchema, tileSchema } from './schemas/tile.schema';
+import type { ColorInput } from './schemas/tile.schema';
 import { ZodValidationPipe } from 'src/pipe/zod-validation.pipe';
 
 @Controller('tiles')
@@ -25,7 +23,7 @@ export class TileController {
   constructor(private readonly tileService: TileService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Get('getAllTiles')
+  @Get()
   findAll() {
     return this.tileService.getAllTiles();
   }
@@ -33,12 +31,11 @@ export class TileController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin, Role.moderator, Role.editor)
   @Put('updateTile/:tileId')
-  updateUserRole(@Param('tileId') id: string, @Body('color') color: Color) {
-    const colorValidate = colorSchema.safeParse({ color });
-    if (!colorValidate.success) {
-      return { success: false, error: colorValidate.error };
-    }
-    return this.tileService.updateTileColor(id, colorValidate.data);
+  updateUserRole(
+    @Param('tileId', new ZodValidationPipe(objectIdSchema)) id: string,
+    @Body(new ZodValidationPipe(colorSchema)) colorData: ColorInput,
+  ) {
+    return this.tileService.updateTileColor(id, colorData);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -54,7 +51,7 @@ export class TileController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin, Role.moderator)
   @Delete('deleteTile/:tileId')
-  deleteTile(@Param('tileId') id: string) {
+  deleteTile(@Param('tileId', new ZodValidationPipe(objectIdSchema)) id: string) {
     return this.tileService.deleteTile(id);
   }
 }
