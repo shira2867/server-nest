@@ -12,7 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { myUserPayloadDto } from 'src/user/dto/myUserPayload.dto';
 import { UserService } from 'src/user/user.service';
 import { allowedrole } from '../user/schemas/user.schema';
-import { Role } from 'src/user/dto/user.dto';
+import { Role } from '../types/enum.type';
 import { Reflector } from '@nestjs/core';
 
 @Injectable()

@@ -12,6 +12,6 @@ export class TileDto {
   color: Color;
 
   @IsDate()
-  createdAt?: Date;
+  createdAt: Date;
   updatedAt?: Date;
 }

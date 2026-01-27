@@ -6,6 +6,7 @@ export enum Role {
   viewer = 'viewer',
 }
 export class UserDto {
+
   @IsString()
   name: string;
 
