@@ -1,58 +1,74 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { MongoClient, ObjectId } from 'mongodb';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Collection, MongoClient, ObjectId } from 'mongodb';
 import { Role } from '../types/enum.type';
-import {  objectIdSchema } from './schemas/user.schema';
 import { User } from '../types/user.type';
 import { UserDto } from '../user/dto/user.dto';
 
 @Injectable()
 export class UserService {
-  constructor(@Inject('MONGO_CLIENT') private readonly client: MongoClient) {}
-
-  async getAllUsers(): Promise<User[]> {
+  private readonly usersCollection: Collection<UserDto>;
+  constructor(@Inject('MONGO_CLIENT') private readonly client: MongoClient) {
     const db = this.client.db('tiles');
-    const users = await db.collection<UserDto>('users').find().toArray();
-    return users.map(({ password, ...user }) => user);
+    this.usersCollection = db.collection<UserDto>('users');
+  }
+  async getAllUsers(): Promise<User[]> {
+    try {
+      const users = await this.usersCollection.find().toArray();
+      return users.map(({ password, ...user }) => user);
+    } catch {
+      throw new InternalServerErrorException('Failed to fetch  from database');
+    }
   }
 
   async getUserById(id: string): Promise<User | null> {
-    const db = this.client.db('tiles');
-    const validatedId = objectIdSchema.parse(id);
-    const _id = new ObjectId(validatedId);
-    const user = await db.collection<UserDto>('users').findOne({ _id });
-    if (!user) {
-      return null;
+    try {
+     
+      const _id = new ObjectId(id);
+      const user = await this.usersCollection.findOne({ _id });
+      if (!user) {
+        return null;
+      }
+      const { password, ...cleanUser } = user;
+      return cleanUser;
+    } catch {
+      throw new InternalServerErrorException('Failed to fetch  from database');
     }
-    const { password, ...cleanUser } = user;
-    return cleanUser;
   }
 
-  async getUserByEmail(email: string): Promise<User | null> {
-    const db = this.client.db('tiles');
+  async getUserByEmail(email: string): Promise<User> {
+  
 
-    const user = await db.collection<UserDto>('users').findOne({ email });
+    const user = await this.usersCollection.findOne({ email });
 
     if (!user) {
-      return null;
+      throw new NotFoundException(`User with email ${email} not found`);
     }
+
     const { password, ...cleanUser } = user;
     return cleanUser;
   }
 
   async getUserByRole(role: Role): Promise<User[]> {
-    const db = this.client.db('tiles');
-    const users = await db
-      .collection<UserDto>('users')
-      .find({ role })
-      .toArray();
-    return users.map(({ password, ...user }) => user);
+    try {
+      
+      const users = await this.usersCollection
+        .find({ role })
+        .toArray();
+      return users.map(({ password, ...user }) => user);
+    } catch {
+      throw new InternalServerErrorException('Failed to fetch  from database');
+    }
   }
   async updateUserRole(id: string, data: { role: Role }) {
     try {
-      const db = this.client.db('tiles');
+     
       const _id = new ObjectId(id);
-      const result = await db
-        .collection<UserDto>('users')
+      const result = await this.usersCollection
         .findOneAndUpdate(
           { _id },
           { $set: { role: data.role } },
@@ -61,7 +77,7 @@ export class UserService {
       if (!result) {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
-    const { password, ...cleanUser } = result;
+      const { password, ...cleanUser } = result;
       return cleanUser;
     } catch (error) {
       if (error instanceof NotFoundException) {

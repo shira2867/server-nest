@@ -7,25 +7,27 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { MongoClient, ObjectId } from 'mongodb';
+import { Collection, MongoClient } from 'mongodb';
 import bcrypt from 'bcrypt';
-import {  UserDto } from '../user/dto/user.dto';
-import{Role, User}from '../types/user.type'
+import { UserDto } from '../user/dto/user.dto';
+import { Role, User } from '../types/user.type';
 import * as jwt from 'jsonwebtoken';
-import { LoginDto } from './dto/login.dto';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UserService } from 'src/user/user.service';
-import { error } from 'console';
 import { CreateUserInput, LoginInput } from './schemas/auth.schema';
 @Injectable()
 export class AuthService {
+  private readonly usersCollection: Collection<UserDto>;
+
   constructor(
     @Inject('MONGO_CLIENT') private readonly client: MongoClient,
     private readonly userService: UserService,
-  ) {}
+  ) {
+    const db = this.client.db('tiles');
+    this.usersCollection = db.collection<UserDto>('users');
+  }
 
   async createUser(userData: CreateUserInput) {
-    let existingUser: User| null = null;
+    let existingUser: User | null = null;
 
     try {
       existingUser = await this.userService.getUserByEmail(userData.email);
@@ -45,15 +47,13 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(userData.password, salt);
 
     try {
-      const db = this.client.db('tiles');
-
       const user: UserDto = {
         ...userData,
         password: hashedPassword,
         role: Role.viewer,
       };
 
-      const result = await db.collection<UserDto>('users').insertOne(user);
+      const result = await this.usersCollection.insertOne(user);
       const { password, ...cleanUser } = user;
       return cleanUser;
     } catch (error) {
@@ -68,9 +68,7 @@ export class AuthService {
       if (!email || !password) {
         throw new BadRequestException('Email and password are required');
       }
-
-      const db = this.client.db('tiles');
-      const user = await db.collection<UserDto>('users').findOne({ email });
+      const user = await this.usersCollection.findOne({ email });
 
       if (!user) {
         throw new BadRequestException('Invalid email or password');

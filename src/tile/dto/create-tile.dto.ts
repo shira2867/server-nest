@@ -1,15 +1,10 @@
 
+import { createZodDto } from "nestjs-zod";
+import { tileSchema } from "../schemas/tile.schema";
 
-import { IsDate, IsEnum } from "class-validator";
-import { Color } from "./tile.dto";
+export class CreateTileDto extends createZodDto(tileSchema) {
 
-export class CreateTileDto {
 
-@IsEnum(Color)
-color:Color
-
-@IsDate()
-createdAt:Date
 
 }
 
