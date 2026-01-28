@@ -11,7 +11,7 @@ export const createUserSchema = z.object({
     passwordRegex,
     'הסיסמה חייבת להכיל לפחות 8 תווים, אות גדולה, אות קטנה, מספר ותו מיוחד'
   ),
-role: z.nativeEnum(Role).optional().default(Role.viewer),
+role: z.enum(Role).optional().default(Role.viewer),
 });
 
 

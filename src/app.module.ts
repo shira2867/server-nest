@@ -14,8 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { APP_PIPE } from '@nestjs/core';
-import { ZodValidationPipe } from './pipe/zod-validation.pipe';
-
+import { ZodValidationPipe } from 'nestjs-zod';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -31,6 +30,9 @@ import { ZodValidationPipe } from './pipe/zod-validation.pipe';
     AuthModule,
   ],
   controllers: [UserController, TileController,AuthController],
-  providers: [UserService, TileService,AuthService],
+  providers: [{
+      provide: APP_PIPE,
+      useClass: ZodValidationPipe,
+    },UserService, TileService,AuthService],
 })
 export class AppModule {}

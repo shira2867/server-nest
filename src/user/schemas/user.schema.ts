@@ -22,8 +22,9 @@ export const allowedrole = Role ;
 export const RoleSchema = z.object({
   role: z.enum(allowedrole), 
 });
-export const RoleEnumSchema = z.enum(Role)
-export const EmailSchema = createUserSchema.shape.email;
+export const EmailSchema = z.object({
+  email: z.email(), 
+});
 
 export const objectIdSchema = z
   .string()
@@ -32,5 +33,6 @@ export const objectIdSchema = z
   });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type RoleInput = z.infer<typeof RoleSchema>;
+
 
 

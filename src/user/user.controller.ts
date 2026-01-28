@@ -1,23 +1,11 @@
 import { Controller, Get, Body, Param, Put, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Role } from '../types/enum.type';
-import { myUserPayloadDto } from './dto/myUserPayload.dto';
 import { JwtAuthGuard, RolesGuard } from '../guard/auth.guard';
 import { Roles } from 'src/decorators/roles.decorator';
 import { User } from './entities/user.entity';
-import {
-  EmailSchema,
-  objectIdSchema,
-  RoleEnumSchema,
-  RoleSchema,
-} from './schemas/user.schema';
-import type { RoleInput } from './schemas/user.schema';
-
-import { ZodValidationPipe } from 'src/pipe/zod-validation.pipe';
-
-interface AuthRequest extends Request {
-  user?: myUserPayloadDto;
-}
+import { EmailParamsDto, IdParamsDto, RoleParamsDto } from 'src/schemas/params.schema';
+import { UpdateRoleDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UserController {
@@ -34,34 +22,34 @@ export class UserController {
   @Roles(Role.admin)
   @Get('/:id')
   findById(
-    @Param('id', new ZodValidationPipe(objectIdSchema)) id: string,
+    @Param() param: IdParamsDto,
   ): Promise<User | null> {
-    return this.userService.getUserById(id);
+    return this.userService.getUserById(param.id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
   @Get('ByRole/:role')
   findByRole(
-    @Param('role', new ZodValidationPipe(RoleEnumSchema)) role: Role,
+    @Param() param: RoleParamsDto,
   ): Promise<User[]> {
-    return this.userService.getUserByRole(role);
+    return this.userService.getUserByRole(param.role);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('ByEmail/:email')
   findByEmail(
-    @Param('email', new ZodValidationPipe(EmailSchema)) email: string,
+    @Param() param: EmailParamsDto,
   ): Promise<User | null> {
-    return this.userService.getUserByEmail(email);
+    return this.userService.getUserByEmail(param.email as string);
   }
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
   @Put('updateRole/:id')
   updateUserRole(
-    @Param('id', new ZodValidationPipe(objectIdSchema)) id: string,
-    @Body(new ZodValidationPipe(RoleSchema)) data: RoleInput,
+    @Param() param: IdParamsDto,
+    @Body() data: UpdateRoleDto,
   ) {
-    return this.userService.updateUserRole(id, data);
+    return this.userService.updateUserRole(param.id, data);
   }
 }

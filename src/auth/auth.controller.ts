@@ -11,12 +11,14 @@ import {
 import { Role } from '../types/enum.type';
 import { createUserSchema, loginSchema, RoleSchema } from './schemas/auth.schema';
 import type { CreateUserInput, LoginInput } from './schemas/auth.schema';
-import { ZodValidationPipe } from '../pipe/zod-validation.pipe';
+import { ZodValidationPipe } from 'nestjs-zod';
 import type { Response } from 'express';
 import { myUserPayloadDto } from '../user/dto/myUserPayload.dto';
 import { JwtAuthGuard} from '../guard/auth.guard';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
 interface AuthRequest extends Request {
   user?: myUserPayloadDto;
 }
@@ -29,12 +31,12 @@ export class AuthController {
   ) {}
   @Post('signUp')
   createUser(
-    @Body(new ZodValidationPipe(createUserSchema)) userData: CreateUserInput,
+    @Body() userData: CreateUserDto,
   ) {
     return this.authService.createUser(userData);
   }
   @Post('login')
-  async login(@Body(new ZodValidationPipe(loginSchema)) loginData: LoginInput, @Res() res: Response) {
+  async login(@Body() loginData: LoginDto, @Res() res: Response) {
     const result = await this.authService.login(loginData);
     console.log('token', result.token);
     res.cookie('token', result.token, {

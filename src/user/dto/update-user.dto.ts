@@ -1,4 +1,10 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateUserDto } from './create-user.dto';
 
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
+
+import { RoleSchema } from "../schemas/user.schema";
+import { createZodDto } from "nestjs-zod";
+
+
+
+export class UpdateRoleDto extends createZodDto(RoleSchema) {
+
+}
